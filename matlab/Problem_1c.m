@@ -73,6 +73,8 @@ for i = 1:length(p_list)
     var(i)  = sum(c_vec.^2) - mean(i)^2;
 end
 
+v_true(floor(Nx/2))
+
 figure();
 var_relerr = abs(var - v_true(floor(Nx/2))) / v_true(floor(Nx/2));
 semilogy(p_list, var_relerr, 'o-', 'DisplayName', 'var. rel. err.');

@@ -113,9 +113,9 @@ which is over-determined if $N > P$ and under-determined and susceptible to inst
 
 To construct the matrix, we loop over $N$ samples of our Gaussian random variable $\mb{y}$. For each sample $\mb{y}_i$, we compute the values of $\Psi_1, \dots, \Psi_P$ and place them in the $\mb{\Psi}$-matrix. The heat equation solution is computed with the same realization of $\mb{y}_i$. However, note that no solution PCE basis functions are used in the computation of $u(\mb{y}_i)$, only the basis functions used to represent $K_{p_k}$ per \eqref{eq:k_pce}.
 
-The results for total solution polynomial order of $p=3$ ($P=10$) and $N$ ranging from $0.5 P$ to more than $4 P$ are shown in Figure \ref{fig:1b}. We see the mean and variance approach the values we obtained using the stochastic Galerkin approach in Homework \#4. It appears that a converged variance is reached with approximately $N=4P=40$ samples, which is in keeping with the recommended value of $(4\text{--}6)P$ that was discussed in class.
+The results for total solution polynomial order of $p=3$ ($P=10$) and $N$ ranging from $0.5 P$ to more than $4 P$ are shown in Figure \ref{fig:1b}. We see the mean and variance approach the values we obtained using the stochastic Galerkin approach in Homework \#4. It appears that a converged variance is reached with approximately $N=4P=40$ samples, which is in keeping with the recommended value of $N\sim(4\text{--}6)P$ that was discussed in class.
 
-Looking at the relative error in the variance from \ref{fig:1c}, we see that as the polynomial order of the stochastic Galerkin PC expansion increases from $p=1$ to $p=4$, the solution improves in accuracy if for each employ $N=4P$ samples. However, this is just one realization of the plot; even when averaging 1000 $N$-sample computations for variance, our relative error was not always monotonically decreasing.
+Looking at the relative error in the variance from Figure \ref{fig:1c}, we see that as the polynomial order of the stochastic Galerkin PC expansion increases from $p=1$ to $p=4$, the relative error improves. Note that for each $p$, we employ $N=4P$ samples. However, Figure \ref{fig:1c} shows just one realization of the plot; even when averaging 1000 $N$-sample computations for variance, our relative error was not always monotonically decreasing.
 
 \begin{figure}[p]
 \centering
