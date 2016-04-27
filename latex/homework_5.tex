@@ -1,0 +1,138 @@
+\documentclass[11pt]{article}
+
+\input{./preamble.tex}
+
+%%
+%% DOCUMENT START
+%%
+
+\begin{document}
+
+
+\newcommand{\widesim}[2][1.5]{
+  \mathrel{\overset{#2}{\scalebox{#1}[1]{$\sim$}}}
+}
+
+\pagestyle{fancyplain}
+\lhead{}
+\chead{}
+\rhead{}
+\lfoot{\hrule UQ: Homework 5}
+\cfoot{\hrule \thepage}
+\rfoot{\hrule Ryan Skinner}
+
+\noindent
+{\Large Homework 5}
+\hfill
+{\large Ryan Skinner}
+\\[0.5ex]
+{\large ASEN 6519: Uncertainty Quantification}
+\hfill
+{\large Due 2016/04/28}\\
+\hrule
+\vspace{6pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 1} %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The thermal coefficient $K$ of a 1-D slab is defined on $\mathc{D} = (0,1)$ and is characterized by a shifted log-normal random process
+\begin{equation}
+K(x,\omega) = 2 + \exp(G(x,\omega)), \quad x \in \mathc{D}
+\end{equation}
+where $G(x,\omega)$ is a Gaussian random process also defined on $\mathc{D}$. The mean and covariance functions of $G(x,\omega)$ are
+\begin{equation}
+\xpect{G(x,\cdot)} = 1.0, \quad x \in \mathc{D}
+\end{equation}
+and
+\begin{equation}
+C_{GG}(x_1,x_2) = \sigma^2 \exp \left( \frac{- | x_1-x_2 | }{\ell} \right), \quad (x1,x2) \in \mathc{D} \times \mathc{D}
+\end{equation}
+respectively. We would like to compute the statistics of the temperature field $u(x)$ by solving the governing steady-state stochastic heat equation
+\begin{equation}
+\begin{aligned}
+-\pp{}{x} \left( K(x,\omega) \pp{u(x,\omega)}{x} \right) &= 1.0, \qquad x \in \mathc{D}, \\
+u(0,\omega) &= 0, \\
+u(1,\omega) &= 0,
+\end{aligned}
+\label{eq:pde}
+\end{equation}
+using the \textbf{least-squares regression} approach.
+
+For this problem, we let $\sigma = 2$ and $\ell = 2.0$, and use the codes from Homework \#1 to generate a $d=2$ Karhunen-Lo\`eve expansion of $G(x,\omega)$ via the analytical solution. The approximate log-normal is then computed through its polynomial chaos expansion (PCE)
+\begin{equation}
+K_{p_k}(x,\mb{y}) = \sum_{i=0}^{P_K} K_i(x) \Psi_i(\mb{y})
+\label{eq:k_pce}
+\end{equation}
+where $K_0$ and $K_i$ ($i>0$) are defined as
+\begin{equation}
+K_0 = 2 + \exp \left( 1 + \frac{1}{2} \sum_{j=1}^d \lambda_j \phi_j^2(x) \right)
+\end{equation}
+and
+\begin{equation}
+K_i(x) = \frac{K_0(x) - 2}{\sqrt{\sum_{j=1}^d (i_j!)}} \sum_{j=1}^d \left( \sqrt{\lambda_j} \phi_j(x) \right)^{i_j}
+\end{equation}
+where $\{ \lambda_i, \phi_i(x) \}_{i=1}^d$ are eigen-pairs of the covariance kernel $C_{GG}$, and $i_j$ denotes the polynomial order of $\Psi_i(\mb{y})$ along the direction $j \in \{1, \dots, d\} = \{1,2\}$. We set $p_k = 14$ as the total order of the PC expansion, and write a finite difference code to solve the PDE in \eqref{eq:pde} for a given $K_{p_k}$, which we are able to compute for arbitrary $\mb{y}$. Note that $\mb{y}$ is a Gaussian random vector. We are only interested in the values of our solution at $x=0.5$, so we employ the stochastic Galerkin discretization of total order $p$ (total number of terms $P$):
+\begin{equation}
+u_p(\mb{y}) = \sum_{j=0}^{P} \underbrace{u_j(x=0.5)}_{c_j} \Psi_j(\mb{y})
+\label{eq:galerkin_discretization}
+\end{equation}
+
+\subsection*{Solution}
+
+In the least-squares linear regression approach, we sample random vectors $\mb{y}_1, \mb{y}_2, \dots, \mb{y}_N$. For each $\mb{y}_i$, we compute the solution $u(x=0.5,\mb{y}_i)$ and the basis functions $\Psi_j(\mb{y}_i)$. These are used to form our LHS measurement matrix and RHS solution sample vector in a linear system that we seek to solve for the coefficient vector $\ul{c}$:
+
+\begin{equation}
+\underbrace{
+\begin{bmatrix}
+\psi_1(\mb{y}_1) & \cdots & \psi_P(\mb{y}_1) \\
+\vdots & \ddots & \vdots \\
+\psi_1(\mb{y}_N) & \cdots & \psi_P(\mb{y}_N)
+\end{bmatrix}
+}_{\mb{\Psi}}
+\underbrace{
+\begin{bmatrix}
+\hat{c}_1 \\ \vdots \\ \hat{c}_P
+\end{bmatrix}
+}_{\mb{\hat{c}}}
+=
+\underbrace{
+\begin{bmatrix}
+u(\mb{y}_1) \\ \vdots \\ u(\mb{y}_N)
+\end{bmatrix}
+}_{\mb{u}}
+\end{equation}
+
+The least squares solution is obtained by solving the matrix system
+\begin{equation}
+( \mb{\Psi}^T \mb{\Psi} ) \mb{\hat{c}} = \mb{\Psi}^T \mb{u}
+\end{equation}
+which is over-determined if $N > P$ and under-determined and susceptible to instability if $N < P$.
+
+To construct the matrix, we loop over $N$ samples of our Gaussian random variable $\mb{y}$. For each sample $\mb{y}_i$, we compute the values of $\Psi_1, \dots, \Psi_P$ and place them in the $\mb{\Psi}$-matrix. The heat equation solution is computed with the same realization of $\mb{y}_i$. However, note that no solution PCE basis functions are used in the computation of $u(\mb{y}_i)$, only the basis functions used to represent $K_{p_k}$ per \eqref{eq:k_pce}.
+
+The results for total solution polynomial order of $p=3$ ($P=10$) and $N$ ranging from $0.5 P$ to more than $4 P$ are shown in Figure \ref{fig:1b}. We see the mean and variance approach the values we obtained using the stochastic Galerkin approach in Homework \#4. It appears that a converged variance is reached with approximately $N=4P=40$ samples, which is in keeping with the recommended value of $(4\text{--}6)P$ that was discussed in class.
+
+Looking at the relative error in the variance from \ref{fig:1c}, we see that as the polynomial order of the stochastic Galerkin PC expansion increases from $p=1$ to $p=4$, the solution improves in accuracy if for each employ $N=4P$ samples. However, this is just one realization of the plot; even when averaging 1000 $N$-sample computations for variance, our relative error was not always monotonically decreasing.
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.9\textwidth]{prob1_b.eps}
+\caption{For total solution polynomial order $p=3$, convergence in the mean and variance of $u(x=0.5,\mb{y})$ as a function of samples $N$.}
+\label{fig:1b}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.8\textwidth]{prob1_c.eps}
+\caption{Relative error of $\var(u(x=0.5,\cdot))$ as the solution's total polynomial order $p$ is increased. $N=4P$ realizations are computed for each $p$ to achieve an over-sampled system for linear regression.}
+\label{fig:1c}
+\end{figure}
+
+
+%%
+%% DOCUMENT END
+%%
+\end{document}
